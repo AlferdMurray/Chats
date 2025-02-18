@@ -13,7 +13,7 @@ const signin = async (req, res) => {
         // Save the user to the database
         let find = await user.find({ email: { $eq: req.body.email } })
         if (find.length == 1) {
-            res.status(400).send({ message: "User already Exists" })
+            res.status(409).send({ message: "User already Exists" })
             return
         }
         await newUser.save()
@@ -26,9 +26,9 @@ const signin = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        let find = await user.find({ email: req.body.email, password: req.body.password })
+        let find = await user.find({ email: req.body.email, password: req.body.password },{name : 1,_id:1,email:1})
         if (find.length == 1) {
-            res.status(200).send('Successful login')
+            res.status(200).send({userData : find[0]})
             return
         }
         res.status(400).send(`Provided combination is incorrect`);

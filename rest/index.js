@@ -9,7 +9,7 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', './views');
 const corsOptions = {
-    origin: 'https://your-frontend.com', // Restrict allowed origins
+    origin: 'http://localhost:3000', // Restrict allowed origins
     methods: ['GET', 'POST'],          // Allow specific HTTP methods
     // credentials: true,                 // Allow cookies
 };
