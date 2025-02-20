@@ -17,3 +17,12 @@ export async function loginService(body) {
         throw error
     }
 }
+
+export async function getChatRoomService(body) {
+    try {
+        let result = await client({url : 'http://localhost:8081/getChatRoom', method : 'POST', data : body})
+        return result
+    } catch (error) {
+        throw error
+    }
+}

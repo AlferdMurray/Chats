@@ -1,4 +1,5 @@
 
+const { default: mongoose } = require('mongoose');
 const { user, room, roomMembers, roomMessages } = require('../Models/model')
 
 const signin = async (req, res) => {
@@ -26,9 +27,9 @@ const signin = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        let find = await user.find({ email: req.body.email, password: req.body.password },{name : 1,_id:1,email:1})
+        let find = await user.find({ email: req.body.email, password: req.body.password }, { name: 1, _id: 1, email: 1 })
         if (find.length == 1) {
-            res.status(200).send({userData : find[0]})
+            res.status(200).send({ userData: find[0] })
             return
         }
         res.status(400).send(`Provided combination is incorrect`);
@@ -49,6 +50,7 @@ const createRoom = async (req, res) => {
         userArr.push({ userId: req.body.sourceId, roomId: response?.roomId?.toString() })
         let rmembers = await roomMembers.insertMany(userArr)
         let newMessage = new roomMessages({
+            createdDate: new Date(),
             roomMessage: req.body.initialMessage,
             roomMemberId: rmembers[rmembers.length - 1]._doc.roomMemberId
         })
@@ -65,8 +67,8 @@ const searchUser = async (req, res) => {
     try {
         let users = await user.aggregate([
             {
-                $match: { 
-                    name: { $regex: req.body.search, $options: "i" } 
+                $match: {
+                    name: { $regex: req.body.search, $options: "i" }
                 }
             },
             {
@@ -79,24 +81,196 @@ const searchUser = async (req, res) => {
             },
             { $unwind: { path: "$userRooms", preserveNullAndEmptyArrays: true } },
             {
-                $project : {
-                    "_id" : 1,
-                    "name" : 1,
-                    "email" : 1,
-                    "userRooms" :  {
-                        roomId : 1,
-                        userId : 1,
-                        roomMemberId : 1
+                $project: {
+                    "_id": 1,
+                    "name": 1,
+                    "email": 1,
+                    "userRooms": {
+                        roomId: 1,
+                        userId: 1,
+                        roomMemberId: 1
                     }
                 }
             },
         ]);
-        users = users.filter((item)=>item._id != req.body.sourceId)
+        users = users.filter((item) => item._id != req.body.sourceId)
         console.log(users);
         res.send(users)
     } catch (error) {
         console.log(error);
+
+    }
+}
+
+const getChatRoom = async (req, res) => {
+    try {
+        let chatRoom = await user.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(req.body.sourceId) }
+            },
+            {
+                $lookup: {
+                    from: "roommembers",
+                    localField: "_id",
+                    foreignField: "userId",
+                    as: "usersroom"
+                }
+            },
+            {
+                $unwind: "$usersroom"
+            },
+            {
+                $lookup: {
+                    from: "roommembers",
+                    localField: "usersroom.roomId",
+                    foreignField: "roomId",
+                    as: "roomMembers"
+                }
+            },
+            {
+                $unwind: "$roomMembers"
+            },
+            {
+                $match: {
+                    $expr: { $eq: ["$roomMembers.roomId", "$usersroom.roomId"] }
+                }
+            },
+            {
+                $lookup : {
+                    from : "users",
+                    localField : "roomMembers.userId",
+                    foreignField : "_id",
+                    as : "roomMembers.user"
+                }
+            },
+            {
+                $unwind : "$roomMembers.user"
+            },
+            {
+                $group: {
+                    _id: {
+                        userId: "$_id",
+                        roomId: "$usersroom.roomId"
+                    },
+                    name: { $first: "$name" },
+                    email: { $first: "$email" },
+                    usersroom: { $first: "$usersroom" },
+                    roomMembers: { $push: "$roomMembers" }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    userId: "$_id.userId",
+                    name: 1,
+                    email: 1,
+                    usersroom: 1,
+                    roomMembers: 1
+                }
+            },
+            {
+                $group: {
+                    _id: "$userId",
+                    name: { $first: "$name" },
+                    email: { $first: "$email" },
+                    rooms: {
+                        $push: {
+                            usersroom: "$usersroom",
+                            roomMembers: "$roomMembers"
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    name: 1,
+                    email: 1,
+                    rooms: 1
+                }
+            }
+        ]);
         
+        console.log(chatRoom[0].rooms.map((item)=>(item.usersroom.roomId)));
+        let topMessage = await room.aggregate([
+            {
+                $match: {
+                    roomId: { $in: chatRoom[0].rooms.map((item)=>(item.usersroom.roomId)) }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'roommembers',
+                    localField: 'roomId',
+                    foreignField: 'roomId',
+                    as: "roommembers"
+                }
+            },
+            {
+                $unwind: "$roommembers"
+            },
+            {
+                $lookup: {
+                    from: "roommessages",
+                    localField: "roomMemberId",
+                    foreignField: "roommembers.roomMemberId",
+                    as: "roommessages"
+                }
+            },
+            {
+                $unwind: "$roommessages"
+            },
+            {
+                $match: {
+                    $expr: { $eq: ["$roommessages.roomMemberId", "$roommembers.roomMemberId"] } // Ensure matching roomMemberId
+                }
+            },
+            {
+                $sort: { "roommessages.createdDate": -1 }
+            },
+            {
+                $group: {
+                    _id: "$roommembers.roomId",
+                    lastMessage: { $first: "$$ROOT" }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "lastMessage.roommembers.userId",
+                    foreignField: "_id",
+                    as: "lastMessage.users"
+                }
+            },
+            {
+                $unwind: "$lastMessage.users"
+            },
+            {
+                $project: {
+                    _id: 0,
+                    lastMessage: {
+                        _id: 0,
+                        __v: 0,
+                        roommembers: {
+                            __v: 0,
+                            _id: 0
+                        },
+                        roommessages: {
+                            __v: 0,
+                            _id: 0
+                        }
+                    },
+                    users: {
+                        __v: 0,
+                        password: 0
+                    }
+                }
+            }
+        ])
+        res.send({ chatRoom, topMessage })
+    } catch (error) {
+        // console.log(error);
+        res.send(error)
     }
 }
 
@@ -104,5 +278,6 @@ module.exports = {
     signin,
     login,
     createRoom,
-    searchUser
+    searchUser,
+    getChatRoom
 }

@@ -4,7 +4,7 @@ const connectDB = require("./Server/server.js");
 
 const port = 8081;
 const cors = require('cors');
-const { signin, login, createRoom, searchUser } = require("./Business Logics/chatBL.js");
+const { signin, login, createRoom, searchUser, getChatRoom } = require("./Business Logics/chatBL.js");
 const app = express();
 app.set('view engine', 'ejs');
 app.set('views', './views');
@@ -31,3 +31,4 @@ app.post("/signIn", signin);
 app.post("/login", login);
 app.post("/createRoom", createRoom)
 app.post("/searchUser", searchUser)
+app.post("/getChatRoom",getChatRoom)

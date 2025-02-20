@@ -29,3 +29,19 @@ code {
   text-align: center;
   min-width: 300px;
 }
+.list-group{
+  /* height: 200px; */
+}
+.list-group-item{
+  background-color: rgb(108 117 125) !important;
+}
+
+.chat-info{
+  color: rgb(255, 255, 255) !important;
+  /* max-height: max-content; */
+}
+
+.active{
+  background-color: rgb(65 74 81) !important;
+  border-color: rgb(65 74 81) !important;
+}
