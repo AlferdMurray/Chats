@@ -23,7 +23,8 @@ const roomMessagesSchema = new mongoose.Schema({
     roomMessageId: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
     roomMessage: String,
     createdDate: mongoose.Schema.Types.Date,
-    roomMemberId: mongoose.Schema.Types.ObjectId
+    roomMemberId: mongoose.Schema.Types.ObjectId,
+    roomId : mongoose.Schema.Types.ObjectId
 })
 
 

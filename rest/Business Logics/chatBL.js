@@ -52,7 +52,8 @@ const createRoom = async (req, res) => {
         let newMessage = new roomMessages({
             createdDate: new Date(),
             roomMessage: req.body.initialMessage,
-            roomMemberId: rmembers[rmembers.length - 1]._doc.roomMemberId
+            roomMemberId: rmembers[rmembers.length - 1]._doc.roomMemberId,
+            roomId: response.roomId
         })
         await newMessage.save()
         console.log(rmembers);
@@ -136,15 +137,15 @@ const getChatRoom = async (req, res) => {
                 }
             },
             {
-                $lookup : {
-                    from : "users",
-                    localField : "roomMembers.userId",
-                    foreignField : "_id",
-                    as : "roomMembers.user"
+                $lookup: {
+                    from: "users",
+                    localField: "roomMembers.userId",
+                    foreignField: "_id",
+                    as: "roomMembers.user"
                 }
             },
             {
-                $unwind : "$roomMembers.user"
+                $unwind: "$roomMembers.user"
             },
             {
                 $group: {
@@ -190,12 +191,12 @@ const getChatRoom = async (req, res) => {
                 }
             }
         ]);
-        
-        console.log(chatRoom[0].rooms.map((item)=>(item.usersroom.roomId)));
+
+        console.log(chatRoom[0].rooms.map((item) => (item.usersroom.roomId)));
         let topMessage = await room.aggregate([
             {
                 $match: {
-                    roomId: { $in: chatRoom[0].rooms.map((item)=>(item.usersroom.roomId)) }
+                    roomId: { $in: chatRoom[0].rooms.map((item) => (item.usersroom.roomId)) }
                 }
             },
             {
@@ -274,10 +275,77 @@ const getChatRoom = async (req, res) => {
     }
 }
 
+
+const getMessages = async (req, res) => {
+    try {
+        let messages = await roomMessages.aggregate([
+            { $match: { roomId: { $eq: new mongoose.Types.ObjectId(req.body.roomId) } } },
+            {
+                $lookup: {
+                    from: "roommembers",
+                    localField: "roomId",
+                    foreignField: "roomId",
+                    as: "roommembers"
+                }
+            },
+            {
+                $project: {
+                    _id : 0,
+                    roomId : 1,
+                    roomMessage : 1,
+                    createdDate : 1,
+                    roomMembers: {
+                        $filter: {
+                            input: "$roommembers",
+                            as: "member",
+                            cond: { $eq: ["$$member.roomMemberId", "$roomMemberId"] }
+                        }
+                    }
+                }
+            },
+            {
+                $unwind : "$roomMembers"
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "roomMembers.userId",
+                    foreignField: "_id",
+                    as: "roomMembers.user"
+                }
+            },
+            {
+                $unwind : "$roomMembers.user"
+            },
+            {
+                $project : {
+                    roomId : 1,
+                    roomMessage : 1,
+                    createdDate : 1,
+                    roomMembers : {
+                        roomMemberId :1,
+                        user : {
+                            _id : 1,
+                            name : 1,
+                            email : 1
+                        }
+                    }
+
+                }
+            }
+        ])
+        res.send(messages)
+    } catch (error) {
+        console.log(error);
+        res.send(error)
+    }
+}
+
 module.exports = {
     signin,
     login,
     createRoom,
     searchUser,
-    getChatRoom
+    getChatRoom,
+    getMessages
 }

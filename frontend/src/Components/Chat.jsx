@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from "react";
 import io from "socket.io-client";
-import { getChatRoomService } from "../Service/chatService";
+import { getChatRoomService, getMessagesService } from "../Service/chatService";
 import { useNavigate } from "react-router-dom";
 import { ChatWindow } from "./ChatWindow";
-
+import { useDispatch, useSelector } from 'react-redux'
+import { setChatData } from "../Slices/chatDataSlice";
 // const socket = io.connect("http://localhost:4000");
 
 const Chat = () => {
     const navigate = useNavigate()
+    const dispatch = useDispatch()
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [search, setSearch] = useState("");
     const [chatRoomData, setChatRoomData] = useState([])
-    const [activeChat,setActiveChat] = useState(null)
+    const [activeChat, setActiveChat] = useState(null)
     const [lastMessageData, setLastMessageData] = useState([])
+    const [messageData, setMessageData] = useState({})
     const userDetails = {
         name: sessionStorage.getItem('name'),
         email: sessionStorage.getItem('email'),
@@ -47,7 +50,14 @@ const Chat = () => {
         }
     }
 
-
+    const handleChatClick = async (room) => {
+        setActiveChat((prev) => (prev != room.usersroom.roomId ? room.usersroom.roomId : null))
+        let messageData = await getMessagesService({ roomId: room.usersroom.roomId })
+        console.log(messageData.data);
+        
+        dispatch(setChatData({key : room.usersroom.roomId,value : messageData.data}))
+    }
+    
     return (
         <div className="container-fluid vh-100 d-flex p-0">
             {/* Sidebar */}
@@ -72,7 +82,7 @@ const Chat = () => {
                 </ul>
                 <ul className="list-group chat-list overflow-auto" style={{ height: "615px" }} >
                     {chatRoomData.map((room, index) => (
-                        <li key={index} className={`list-group-item d-flex align-items-center p-3 ${activeChat == room.usersroom.roomId ? 'active' : ''}`} onClick={()=>{setActiveChat((prev)=>(prev != room.usersroom.roomId ? room.usersroom.roomId : null))}}>
+                        <li key={index} className={`list-group-item d-flex align-items-center p-3 ${activeChat == room.usersroom.roomId ? 'active' : ''}`} onClick={() => { handleChatClick(room) }}>
                             <div className="chat-avatar bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style={{ width: "40px", height: "40px" }}>
                                 {room.roomMembers[0].user.name.charAt(0).toUpperCase()}
                             </div>
@@ -86,7 +96,7 @@ const Chat = () => {
             </div>
 
             {/* Chat Window */}
-            <ChatWindow roomId={activeChat}/>
+            <ChatWindow roomId={activeChat} />
         </div>
     );
 };

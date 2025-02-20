@@ -26,3 +26,12 @@ export async function getChatRoomService(body) {
         throw error
     }
 }
+
+export async function getMessagesService(body) {
+    try {
+        let result = await client({url : 'http://localhost:8081/getMessages', method : 'POST', data : body})
+        return result
+    } catch (error) {
+        throw error
+    }
+}
