@@ -290,10 +290,10 @@ const getMessages = async (req, res) => {
             },
             {
                 $project: {
-                    _id : 0,
-                    roomId : 1,
-                    roomMessage : 1,
-                    createdDate : 1,
+                    _id: 0,
+                    roomId: 1,
+                    roomMessage: 1,
+                    createdDate: 1,
                     roomMembers: {
                         $filter: {
                             input: "$roommembers",
@@ -304,7 +304,7 @@ const getMessages = async (req, res) => {
                 }
             },
             {
-                $unwind : "$roomMembers"
+                $unwind: "$roomMembers"
             },
             {
                 $lookup: {
@@ -315,19 +315,19 @@ const getMessages = async (req, res) => {
                 }
             },
             {
-                $unwind : "$roomMembers.user"
+                $unwind: "$roomMembers.user"
             },
             {
-                $project : {
-                    roomId : 1,
-                    roomMessage : 1,
-                    createdDate : 1,
-                    roomMembers : {
-                        roomMemberId :1,
-                        user : {
-                            _id : 1,
-                            name : 1,
-                            email : 1
+                $project: {
+                    roomId: 1,
+                    roomMessage: 1,
+                    createdDate: 1,
+                    roomMembers: {
+                        roomMemberId: 1,
+                        user: {
+                            _id: 1,
+                            name: 1,
+                            email: 1
                         }
                     }
 
@@ -341,11 +341,46 @@ const getMessages = async (req, res) => {
     }
 }
 
+const addNewMessage = async (req, res) => {
+    try {
+        // return
+        let result = await roomMembers.aggregate([
+            {
+                $match: { roomId: new mongoose.Types.ObjectId(req.body.roomId), userId : new mongoose.Types.ObjectId(req.body.sourceId) }
+            },
+            {
+                $project : {
+                    "_id" : new mongoose.Types.ObjectId(),
+                    "roomMessageId" : new mongoose.Types.ObjectId(),
+                    "roomMessage" : req.body.newMessage,
+                    roomId : 1,
+                    roomMemberId : 1,
+                    createdDate : new Date(req.body.createdDate)
+                }
+            },
+            {
+                $merge : {
+                    into : "roommessages",
+                    on : "_id",
+                    whenMatched : "keepExisting",
+                    whenNotMatched : "insert"
+                }
+            }
+        ])
+        res.send(result)
+    } catch (error) {
+        console.log(error);
+        res.send(error)
+    }
+}
+
+
 module.exports = {
     signin,
     login,
     createRoom,
     searchUser,
     getChatRoom,
-    getMessages
+    getMessages,
+    addNewMessage
 }

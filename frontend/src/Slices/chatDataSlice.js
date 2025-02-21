@@ -8,10 +8,13 @@ const configSlice = createSlice({
     reducers: {
         setChatData(state, action) {
             state[action.payload.key] = action.payload.value
+        },
+        pushNewMessage(state,action){
+            state[action.payload.key].push(action.payload.value)
         }
     }
 
 })
 
-export const { setChatData } = configSlice.actions;
+export const { setChatData,pushNewMessage } = configSlice.actions;
 export default configSlice.reducer
