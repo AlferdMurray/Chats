@@ -57,8 +57,17 @@ const createRoom = async (req, res) => {
         })
         await newMessage.save()
         console.log(rmembers);
+        let data = {
+            roomId: response.roomId,
+            roomMembers: rmembers,
+            roomMessage: newMessage
+        }
 
-        res.status(201).send('Room Created successfully')
+        data = {
+            ...data,
+            roomMembers: rmembers.find((item) => item.userId != req.body.sourceId)
+        }
+        res.status(201).send(data)
     } catch (error) {
         res.status(400).send('Room creation failed')
     }
@@ -69,7 +78,8 @@ const searchUser = async (req, res) => {
         let users = await user.aggregate([
             {
                 $match: {
-                    name: { $regex: req.body.search, $options: "i" }
+                    name: { $regex: req.body.search, $options: "i" },
+                    _id: { $ne: new mongoose.Types.ObjectId(req.body.sourceId) }
                 }
             },
             {
@@ -80,26 +90,37 @@ const searchUser = async (req, res) => {
                     as: "userRooms"
                 }
             },
-            { $unwind: { path: "$userRooms", preserveNullAndEmptyArrays: true } },
-            {
-                $project: {
-                    "_id": 1,
-                    "name": 1,
-                    "email": 1,
-                    "userRooms": {
-                        roomId: 1,
-                        userId: 1,
-                        roomMemberId: 1
-                    }
-                }
-            },
+            // { $unwind: { path: "$userRooms", preserveNullAndEmptyArrays: true } },
+            // {
+            //     $match: {
+            //         userRooms: { $exists: false }
+            //     }
+            // },
+            // {
+            //     $project: {
+            //         password: 0,
+            //         __v: 0
+            //     }
+            // }
+            //     {
+            //         $project: {
+            //             "_id": 1,
+            //             "name": 1,
+            //             "email": 1,
+            //             "userRooms": {
+            //                 roomId: 1,
+            //                 userId: 1,
+            //                 roomMemberId: 1
+            //             }
+            //         }
+            //     },
         ]);
-        users = users.filter((item) => item._id != req.body.sourceId)
-        console.log(users);
+        // users = users.filter((item) => item._id != req.body.sourceId)
+        // console.log(users);
         res.send(users)
     } catch (error) {
         console.log(error);
-
+        res.send(error)
     }
 }
 
@@ -346,24 +367,24 @@ const addNewMessage = async (req, res) => {
         // return
         let result = await roomMembers.aggregate([
             {
-                $match: { roomId: new mongoose.Types.ObjectId(req.body.roomId), userId : new mongoose.Types.ObjectId(req.body.sourceId) }
+                $match: { roomId: new mongoose.Types.ObjectId(req.body.roomId), userId: new mongoose.Types.ObjectId(req.body.sourceId) }
             },
             {
-                $project : {
-                    "_id" : new mongoose.Types.ObjectId(),
-                    "roomMessageId" : new mongoose.Types.ObjectId(),
-                    "roomMessage" : req.body.newMessage,
-                    roomId : 1,
-                    roomMemberId : 1,
-                    createdDate : new Date(req.body.createdDate)
+                $project: {
+                    "_id": new mongoose.Types.ObjectId(),
+                    "roomMessageId": new mongoose.Types.ObjectId(),
+                    "roomMessage": req.body.newMessage,
+                    roomId: 1,
+                    roomMemberId: 1,
+                    createdDate: new Date(req.body.createdDate)
                 }
             },
             {
-                $merge : {
-                    into : "roommessages",
-                    on : "_id",
-                    whenMatched : "keepExisting",
-                    whenNotMatched : "insert"
+                $merge: {
+                    into: "roommessages",
+                    on: "_id",
+                    whenMatched: "keepExisting",
+                    whenNotMatched: "insert"
                 }
             }
         ])
