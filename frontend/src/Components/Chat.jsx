@@ -8,7 +8,7 @@ import { pushNewMessage, setChatData } from "../Slices/chatDataSlice";
 import { setLastMessage, updateLastMessage } from "../Slices/lastMessageSlice";
 import NewChatPopup from "./NewChatPopup";
 import { setChatsData } from "../Slices/chatsDataSlice";
-const socket = io.connect("http://192.168.1.36:4000");
+const socket = io.connect("http://192.168.1.34:4000");
 
 const Chat = () => {
     const navigate = useNavigate()
@@ -120,7 +120,8 @@ const Chat = () => {
                             </div>
                             <div className="chat-info">
                                 <strong>{room.roomMembers.filter((roomie) => roomie.user._id !== userDetails.sourceId).map((roomie) => (roomie.user.name)).join(', ')}</strong>
-                                <p className="small text-muted m-0">{lastMessageData[index].lastMessage.users._id === userDetails.sourceId ? "Me" : lastMessageData[index].lastMessage.users.name} : {lastMessageData[index].lastMessage.roommessages.roomMessage.length >= 255 ? lastMessageData[index].lastMessage.roommessages.roomMessage.slice(0, 27) + " ....." : lastMessageData[index].lastMessage.roommessages.roomMessage}</p>
+                                {/* <p className="small text-muted m-0">{lastMessageData[index].lastMessage.users._id === userDetails.sourceId ? "Me" : lastMessageData[index].lastMessage.users.name} : {lastMessageData[index].lastMessage.roommessages.roomMessage.length >= 255 ? lastMessageData[index].lastMessage.roommessages.roomMessage.slice(0, 27) + " ....." : lastMessageData[index].lastMessage.roommessages.roomMessage}</p> */}
+                                <p className="small text-muted m-0">No Last Message da</p>
                             </div>
                         </li>
                     ))}

@@ -25,7 +25,7 @@ const NewChatPopup = ({ onClose, user }) => {
         debugger;
         console.log(messages);
 
-        dispatch(pushNewChat({
+        let newChat = {
             usersroom: {
                 roomId: newRoom.data.roomId,
             },
@@ -50,9 +50,13 @@ const NewChatPopup = ({ onClose, user }) => {
             // createdDate: newRoom.data.roomMessage.createdDate,
             // roomMessage: newRoom.data.roomMessage.roomMessage,
             // roomId: newRoom.data.roomId
-        }))
+
+        }
+
+
+        dispatch(pushNewChat(newChat))
         dispatch(updateLastMessage({ roomId: newRoom.data.roomId, name: userDetails.name, message: newRoom.data.roomMessage.roomMessage }))
-        dispatch()
+        // dispatch()
     }
 
     return (
