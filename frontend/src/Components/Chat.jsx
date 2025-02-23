@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { pushNewMessage, setChatData } from "../Slices/chatDataSlice";
 import { setLastMessage, updateLastMessage } from "../Slices/lastMessageSlice";
 import NewChatPopup from "./NewChatPopup";
+import { setChatsData } from "../Slices/chatsDataSlice";
 const socket = io.connect("http://192.168.1.36:4000");
 
 const Chat = () => {
@@ -16,7 +17,7 @@ const Chat = () => {
     const [popup, setPopup] = useState(false);
     const [search, setSearch] = useState("");
     const [newUser, setNewUser] = useState(undefined)
-    const [chatRoomData, setChatRoomData] = useState([])
+    const chatRoomData = useSelector((state) => state.chatsData)
     const [activeChat, setActiveChat] = useState(null)
     const lastMessageData = useSelector((state) => state.lastMessage)
     // const [messageData, setMessageData] = useState({})
@@ -38,7 +39,8 @@ const Chat = () => {
             let result = await getChatRoomService(userDetails)
             if (result.data.chatRoom) {
                 dispatch(setLastMessage(result?.data?.topMessage))
-                setChatRoomData(result?.data?.chatRoom?.length > 0 ? result?.data?.chatRoom[0]?.rooms : [])
+                dispatch(setChatsData(result?.data?.chatRoom[0]?.rooms))
+                // setChatRoomData(result?.data?.chatRoom?.length > 0 ?  : [])
                 // setLastMessageData(result?.data?.topMessage)
                 socket.emit("join_room", JSON.stringify(result?.data?.chatRoom?.length > 0 && result?.data?.chatRoom[0].rooms?.map((room) => (room.usersroom.roomId))))
             }

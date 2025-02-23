@@ -3,6 +3,7 @@ import { createRoomService } from "../Service/chatService";
 import { useDispatch, useSelector } from "react-redux";
 import { addChatData, setChatData } from "../Slices/chatDataSlice";
 import { updateLastMessage } from "../Slices/lastMessageSlice";
+import { pushNewChat } from "../Slices/chatsDataSlice";
 
 const NewChatPopup = ({ onClose, user }) => {
     const [inputValue, setInputValue] = useState("");
@@ -24,21 +25,34 @@ const NewChatPopup = ({ onClose, user }) => {
         debugger;
         console.log(messages);
 
-        dispatch(setChatData({
-            key: newRoom.data.roomId, value: [{
-                roomMembers: {
+        dispatch(pushNewChat({
+            usersroom: {
+                roomId: newRoom.data.roomId,
+            },
+            roomMembers: [
+                {
+                    roomId: newRoom.data.roomId,
                     user: {
                         _id: userDetails.sourceId,
                         name: userDetails.name,
                         email: userDetails.email
                     }
                 },
-                createdDate: newRoom.data.roomMessage.createdDate,
-                roomMessage: newRoom.data.roomMessage.roomMessage,
-                roomId: newRoom.data.roomId
-            }]
+                {
+                    roomId: newRoom.data.roomId,
+                    user: {
+                        _id: user._id,
+                        name: user.name,
+                        email: user.email
+                    }
+                }
+            ],
+            // createdDate: newRoom.data.roomMessage.createdDate,
+            // roomMessage: newRoom.data.roomMessage.roomMessage,
+            // roomId: newRoom.data.roomId
         }))
         dispatch(updateLastMessage({ roomId: newRoom.data.roomId, name: userDetails.name, message: newRoom.data.roomMessage.roomMessage }))
+        dispatch()
     }
 
     return (
