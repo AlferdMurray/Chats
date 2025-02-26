@@ -3,7 +3,7 @@ import chatDataSlice from "../Slices/chatDataSlice";
 import lastMessageSlice from "../Slices/lastMessageSlice"
 import chatsDataSlice from "../Slices/chatsDataSlice"
 export const store = configureStore({
-    devTools:true,
+    devTools:false,
     reducer: {
         chatData: chatDataSlice,
         lastMessage : lastMessageSlice,
