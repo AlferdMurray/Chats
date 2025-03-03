@@ -5,7 +5,7 @@ import { addChatData, setChatData } from "../Slices/chatDataSlice";
 import { updateLastMessage } from "../Slices/lastMessageSlice";
 import { pushNewChat } from "../Slices/chatsDataSlice";
 
-const NewChatPopup = ({ onClose, user }) => {
+const NewChatPopup = ({ onClose, user, socket }) => {
     const [inputValue, setInputValue] = useState("");
     const userDetails = {
         name: sessionStorage.getItem('name'),
@@ -57,6 +57,9 @@ const NewChatPopup = ({ onClose, user }) => {
         dispatch(pushNewChat(newChat))
         dispatch(updateLastMessage({ roomId: newRoom.data.roomId, name: userDetails.name, message: newRoom.data.roomMessage.roomMessage }))
         // dispatch()
+
+        socket.emit("new_room", JSON.stringify({ targetId: user._id, newChat }))
+        socket.emit("join_room", JSON.stringify([newRoom.data.roomId]))
     }
 
     return (

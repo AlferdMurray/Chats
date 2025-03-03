@@ -10,7 +10,9 @@ const configSlice = createSlice({
             state[action.payload.key] = action.payload.value
         },
         pushNewMessage(state,action){
-            state[action.payload.key].push(action.payload.value)
+            if(state[action.payload.key]){
+                state[action.payload.key].push(action.payload.value)                
+            }
         },
         // addChatData(state,action){
         //     state[action.payload.key] = action.payload.value

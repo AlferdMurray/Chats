@@ -10,7 +10,8 @@ const configSlice = createSlice({
             state.push(...action.payload)
         },
         pushNewChat(state, action) {
-            state[action.payload.key].push(action.payload.value)
+            state.push(action.payload)
+            console.log(state);            
         }
     }
 

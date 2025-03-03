@@ -7,12 +7,22 @@ import { useDispatch, useSelector } from 'react-redux'
 import { pushNewMessage, setChatData } from "../Slices/chatDataSlice";
 import { setLastMessage, updateLastMessage } from "../Slices/lastMessageSlice";
 import NewChatPopup from "./NewChatPopup";
-import { setChatsData } from "../Slices/chatsDataSlice";
-const socket = io.connect("http://192.168.1.34:4000");
+import { pushNewChat, setChatsData } from "../Slices/chatsDataSlice";
+
+const socket = io.connect("http://192.168.1.34:4000", {
+    query: {
+        email: sessionStorage.getItem('email')
+    }
+})
 
 const Chat = () => {
     const navigate = useNavigate()
     const dispatch = useDispatch()
+    // const [socket,_setSocket] =useState(io.connect("http://192.168.1.36:4000", {
+    //     query: {
+    //         email: sessionStorage.getItem('email')
+    //     }
+    // })) 
     const messages = useSelector((state) => state.chatData)
     const [popup, setPopup] = useState(false);
     const [search, setSearch] = useState("");
@@ -30,7 +40,42 @@ const Chat = () => {
 
 
     useEffect(() => {
-        getChatRoomData()
+        if (chatRoomData.length == 0) {
+            getChatRoomData()
+        }
+        // else {
+        socket.on("receive_message", (payload) => {
+            console.log(payload);
+            debugger
+            let obj = {
+                roomMembers: {
+                    user: {
+                        _id: payload.sourceId,
+                        name: payload.name
+                    }
+                },
+                createdDate: payload.createdDate,
+                roomMessage: payload.newMessage
+            }
+            console.log({ key: payload.roomId, value: obj });
+            // console.log(messages);
+
+            dispatch(pushNewMessage({ key: payload.roomId, value: obj }))
+            dispatch(updateLastMessage({ roomId: payload.roomId, name: payload.name, message: payload.newMessage }))
+            // socket.removeListener("receive_message")
+        })
+
+        socket.on("new_room", (payload) => {
+            console.log(payload, "from BE");
+            dispatch(pushNewChat(payload.message))
+            socket.emit("join_room", JSON.stringify([payload.message.usersroom.roomId]))
+            // socket.removeListener("new_room")
+        })
+        // }
+        return()=>{
+            socket.off("new_room")
+            socket.off("receive_message")
+        }
     }, [])
 
     const getChatRoomData = async () => {
@@ -49,26 +94,9 @@ const Chat = () => {
         else {
             navigate('/login')
         }
-        socket.on("receive_message", (payload) => {
-            console.log(payload);
 
-            let obj = {
-                roomMembers: {
-                    user: {
-                        _id: payload.sourceId,
-                        name: payload.name
-                    }
-                },
-                createdDate: payload.createdDate,
-                roomMessage: payload.newMessage
-            }
-            console.log({ key: payload.roomId, value: obj });
-            console.log(messages);
-
-            dispatch(pushNewMessage({ key: payload.roomId, value: obj }))
-            dispatch(updateLastMessage({ roomId: payload.roomId, name: payload.name, message: payload.newMessage }))
-        })
     }
+
 
     const handleChatClick = async (room) => {
         debugger
@@ -113,13 +141,13 @@ const Chat = () => {
                     ))}
                 </ul>
                 <ul hidden={users.length != 0} className="list-group chat-list overflow-auto" style={{ height: "615px" }} >
-                    {chatRoomData.map((room, index) => (
-                        <li key={index} className={`list-group-item d-flex align-items-center p-3 ${activeChat === room.usersroom.roomId ? 'active' : ''}`} onClick={() => { handleChatClick(room) }}>
+                    {(chatRoomData.length > 0 && chatRoomData) && chatRoomData?.map((room, index) => (
+                        <li key={index} className={`list-group-item d-flex align-items-center p-3 ${activeChat === room?.usersroom?.roomId ? 'active' : ''}`} onClick={() => { handleChatClick(room) }}>
                             <div className="chat-avatar bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style={{ width: "40px", height: "40px" }}>
-                                {room.roomMembers[0].user.name.charAt(0).toUpperCase()}
+                                {room?.roomMembers[0]?.user?.name?.charAt(0).toUpperCase() || 'null'}
                             </div>
                             <div className="chat-info">
-                                <strong>{room.roomMembers.filter((roomie) => roomie.user._id !== userDetails.sourceId).map((roomie) => (roomie.user.name)).join(', ')}</strong>
+                                <strong>{room?.roomMembers?.filter((roomie) => roomie?.user?._id !== userDetails.sourceId).map((roomie) => (roomie?.user?.name)).join(', ')}</strong>
                                 {/* <p className="small text-muted m-0">{lastMessageData[index].lastMessage.users._id === userDetails.sourceId ? "Me" : lastMessageData[index].lastMessage.users.name} : {lastMessageData[index].lastMessage.roommessages.roomMessage.length >= 255 ? lastMessageData[index].lastMessage.roommessages.roomMessage.slice(0, 27) + " ....." : lastMessageData[index].lastMessage.roommessages.roomMessage}</p> */}
                                 <p className="small text-muted m-0">No Last Message da</p>
                             </div>
@@ -130,7 +158,7 @@ const Chat = () => {
 
             {/* Chat Window */}
             <ChatWindow roomId={activeChat} socket={socket} userDetails={userDetails} />
-            {popup && <NewChatPopup user={newUser} onClose={() => { setPopup(false) }} />}
+            {popup && <NewChatPopup user={newUser} onClose={() => { setPopup(false) }} socket={socket} />}
         </div>
     );
 };

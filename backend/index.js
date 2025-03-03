@@ -2,7 +2,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
-const { addNewMessage } = require("./wsBL/wsBL");
+const { addNewMessage, insertSocketId, removeSocketId, getSocketId } = require("./wsBL/wsBL");
 const connectDB = require("./Server/server");
 
 const app = express();
@@ -17,10 +17,18 @@ const io = new Server(server, {
   },
 });
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log(`User Connected: ${socket.id}`);
-  console.log(JSON.stringify(socket));
-  
+  console.log(socket.handshake.query.email);
+  if (socket.handshake.query.email == 'null') {
+    console.log("here");
+    socket.disconnect()
+    return
+  }
+
+  // Get all connected socket IDs
+  console.log("All connected clients:", Array.from(io.sockets.sockets.keys()));
+  await insertSocketId(socket.id, socket.handshake.query.email)
   // Join a room
   socket.on("join_room", (rooms) => {
     for (const room of JSON.parse(rooms)) {
@@ -29,16 +37,21 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("new_room", async (data) => {
+    let socketId = await getSocketId(JSON.parse(data).targetId)
+    io.to(socketId).emit("new_room",{message : JSON.parse(data).newChat}) // Send message to the room
+  });
+
   // Handle chat message
   socket.on("send_message", async (data) => {
-    // console.log(data);
-
+    console.log(data.newMessage);
     io.to(data.roomId).emit("receive_message", { newMessage: data.newMessage, sourceId: data.sourceId, createdDate: data.createdDate, roomId: data.roomId, name: data.name }); // Send message to the room
     await addNewMessage(data)
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async (data) => {
     console.log("User Disconnected", socket.id);
+    await removeSocketId(socket.id)
   });
 });
 

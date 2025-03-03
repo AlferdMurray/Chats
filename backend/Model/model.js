@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
     _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
     name: String,
     email: String,
-    password: String
+    password: String,
+    socketId : String
 })
 
 const roomSchema = new mongoose.Schema({
