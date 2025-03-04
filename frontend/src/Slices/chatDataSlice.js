@@ -14,6 +14,9 @@ const configSlice = createSlice({
                 state[action.payload.key].push(action.payload.value)                
             }
         },
+        renderChatData(state,_action){
+            state = state
+        }
         // addChatData(state,action){
         //     state[action.payload.key] = action.payload.value
         // }
@@ -21,5 +24,5 @@ const configSlice = createSlice({
 
 })
 
-export const { setChatData,pushNewMessage,addChatData } = configSlice.actions;
+export const { setChatData,pushNewMessage,renderChatData } = configSlice.actions;
 export default configSlice.reducer

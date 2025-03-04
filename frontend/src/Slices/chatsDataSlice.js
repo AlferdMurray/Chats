@@ -11,11 +11,15 @@ const configSlice = createSlice({
         },
         pushNewChat(state, action) {
             state.push(action.payload)
-            console.log(state);            
+            console.log(state);
+        },
+        renderChat(state, _action) {
+            let dummy = state
+            state = initialState
+            state = dummy
         }
     }
-
 })
 
-export const { setChatsData, pushNewChat } = configSlice.actions;
+export const { setChatsData, pushNewChat,renderChat } = configSlice.actions;
 export default configSlice.reducer

@@ -17,7 +17,7 @@ const io = new Server(server, {
   },
 });
 
-io.on("connection", async (socket) => {
+io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
   console.log(socket.handshake.query.email);
   if (socket.handshake.query.email == 'null') {
@@ -28,7 +28,7 @@ io.on("connection", async (socket) => {
 
   // Get all connected socket IDs
   console.log("All connected clients:", Array.from(io.sockets.sockets.keys()));
-  await insertSocketId(socket.id, socket.handshake.query.email)
+  insertSocketId(socket.id, socket.handshake.query.email)
   // Join a room
   socket.on("join_room", (rooms) => {
     for (const room of JSON.parse(rooms)) {
@@ -39,7 +39,7 @@ io.on("connection", async (socket) => {
 
   socket.on("new_room", async (data) => {
     let socketId = await getSocketId(JSON.parse(data).targetId)
-    io.to(socketId).emit("new_room",{message : JSON.parse(data).newChat}) // Send message to the room
+    io.to(socketId).emit("new_room", { message: JSON.parse(data).newChat }) // Send message to the room
   });
 
   // Handle chat message
@@ -49,8 +49,9 @@ io.on("connection", async (socket) => {
     await addNewMessage(data)
   });
 
-  socket.on("disconnect", async (data) => {
+  socket.on("disconnect", async () => {
     console.log("User Disconnected", socket.id);
+    console.log("All connected clients:", Array.from(io.sockets.sockets.keys()));
     await removeSocketId(socket.id)
   });
 });

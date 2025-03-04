@@ -16,10 +16,13 @@ const configSlice = createSlice({
                     obj.lastMessage.users.name = action.payload.name
                 }
             })
+        },
+        addLastMessage(state,action){
+            state.push(action.payload)
         }
     }
 
 })
 
-export const { setLastMessage, updateLastMessage } = configSlice.actions;
+export const { setLastMessage, updateLastMessage, addLastMessage } = configSlice.actions;
 export default configSlice.reducer

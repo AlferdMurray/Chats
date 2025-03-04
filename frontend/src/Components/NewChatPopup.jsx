@@ -1,9 +1,8 @@
 import React, { use, useState } from "react";
 import { createRoomService } from "../Service/chatService";
 import { useDispatch, useSelector } from "react-redux";
-import { addChatData, setChatData } from "../Slices/chatDataSlice";
-import { updateLastMessage } from "../Slices/lastMessageSlice";
-import { pushNewChat } from "../Slices/chatsDataSlice";
+import { addLastMessage, updateLastMessage } from "../Slices/lastMessageSlice";
+import { pushNewChat, renderChat } from "../Slices/chatsDataSlice";
 
 const NewChatPopup = ({ onClose, user, socket }) => {
     const [inputValue, setInputValue] = useState("");
@@ -53,11 +52,27 @@ const NewChatPopup = ({ onClose, user, socket }) => {
 
         }
 
+        let lastMessage = {
+            roommembers: {
+                roomId: newRoom.data.roomId,
+                userId: userDetails.sourceId
+            },
+            roommessages: {
+                createdDate: newRoom.data.roomMessage.createdDate,
+                roomId: newRoom.data.roomId,
+                roomMessage: newRoom.data.roomMessage.roomMessage
+            },
+            users: {
+                name : userDetails.name,
+                email : userDetails.email
+            }
+
+        }
 
         dispatch(pushNewChat(newChat))
-        dispatch(updateLastMessage({ roomId: newRoom.data.roomId, name: userDetails.name, message: newRoom.data.roomMessage.roomMessage }))
-        // dispatch()
-
+        // dispatch(updateLastMessage({ roomId: newRoom.data.roomId, name: userDetails.name, message: newRoom.data.roomMessage.roomMessage }))
+        dispatch(addLastMessage({lastMessage}))
+        dispatch(renderChat())
         socket.emit("new_room", JSON.stringify({ targetId: user._id, newChat }))
         socket.emit("join_room", JSON.stringify([newRoom.data.roomId]))
     }

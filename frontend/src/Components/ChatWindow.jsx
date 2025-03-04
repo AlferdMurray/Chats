@@ -2,6 +2,7 @@ import { useDispatch, useSelector } from "react-redux"
 import moment from 'moment'
 import { useEffect, useRef, useState } from "react"
 import { updateLastMessage } from "../Slices/lastMessageSlice"
+import { renderChat } from "../Slices/chatsDataSlice"
 
 export const ChatWindow = ({ roomId, socket, userDetails }) => {
     const [newMessage, setNewMessage] = useState('')
@@ -13,6 +14,7 @@ export const ChatWindow = ({ roomId, socket, userDetails }) => {
         console.log({ newMessage, roomId, sourceId: userDetails.sourceId, name: userDetails.name, createdDate: moment.utc().toDate() })
         setNewMessage('')
         dispatch(updateLastMessage({ roomId, name: userDetails.name, message: newMessage }))
+        dispatch(renderChat())
         socket.emit("send_message", { newMessage, roomId, sourceId: userDetails.sourceId, name: userDetails.name, createdDate: moment.utc().toDate() })
     }
     // useEffect(() => {
@@ -29,7 +31,7 @@ export const ChatWindow = ({ roomId, socket, userDetails }) => {
     // };
     return (
         <div className="col-md-9 d-flex flex-column bg-secondary text-light p-3">
-            {roomId ? <div className="chat-box flex-grow-1 overflow-auto p-3 border rounded bg-dark" style={{scrollBehavior : 'smooth',scrollbarWidth : 'thin', scrollbarColor : 'white', scrollPaddingRight : '1000px'}} >
+            {roomId ? <div className="chat-box flex-grow-1 overflow-auto p-3 border rounded bg-dark" style={{ scrollBehavior: 'smooth', scrollbarWidth: 'thin', scrollbarColor: 'white', scrollPaddingRight: '1000px' }} >
                 {messages[roomId]?.map((msg) => (
                     <div className={`d-flex ${msg.roomMembers.user._id === sessionStorage.getItem('sourceId') ? "justify-content-end" : "justify-content-start"} mb-2`}>
                         <div className={`p-2 rounded text-light ${msg.roomMembers.user._id === sessionStorage.getItem('sourceId') ? "bg-success" : "bg-primary"}`} style={{ maxWidth: "75%" }}>

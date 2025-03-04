@@ -102,21 +102,36 @@ const searchUser = async (req, res) => {
             //         __v: 0
             //     }
             // }
-            //     {
-            //         $project: {
-            //             "_id": 1,
-            //             "name": 1,
-            //             "email": 1,
-            //             "userRooms": {
-            //                 roomId: 1,
-            //                 userId: 1,
-            //                 roomMemberId: 1
-            //             }
-            //         }
-            //     },
+            {
+                $project: {
+                    "_id": 1,
+                    "name": 1,
+                    "email": 1,
+                    // "userRooms": {
+                    //     roomId: 1,
+                    //     userId: 1,
+                    //     roomMemberId: 1
+                    // }
+                }
+            },
         ]);
-        // users = users.filter((item) => item._id != req.body.sourceId)
-        // console.log(users);
+
+        let userRooms = await roomMembers.aggregate([
+            {
+                $group: {
+                    _id: "$roomId",
+                    users: { $push: "$userId" }
+                }
+            }
+        ])
+        userRooms = userRooms.map((item) => (item.users.map((item) => item.toString())))
+        userRooms = userRooms.flatMap((item) => {
+            if (item.includes(req.body.sourceId)) {
+                return item
+            }
+            return []
+        })
+        users = users.filter((item) => !userRooms.includes(item._id.toString()))
         res.send(users)
     } catch (error) {
         console.log(error);

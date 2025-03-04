@@ -9,20 +9,30 @@ import { setLastMessage, updateLastMessage } from "../Slices/lastMessageSlice";
 import NewChatPopup from "./NewChatPopup";
 import { pushNewChat, setChatsData } from "../Slices/chatsDataSlice";
 
-const socket = io.connect("http://192.168.1.34:4000", {
+const socket = io("http://192.168.1.34:4000", {
+    reconnection: true,
+    reconnectionDelay: 1000,
+    autoConnect: true,
     query: {
         email: sessionStorage.getItem('email')
     }
 })
 
 const Chat = () => {
+
+
     const navigate = useNavigate()
     const dispatch = useDispatch()
-    // const [socket,_setSocket] =useState(io.connect("http://192.168.1.36:4000", {
+    // const socket = io.connect("http://192.168.1.34:4000", {
     //     query: {
     //         email: sessionStorage.getItem('email')
     //     }
-    // })) 
+    // })
+    // const [socket, _setSocket] = useState(() => (io.connect("http://192.168.1.36:4000", {
+    //     query: {
+    //         email: sessionStorage.getItem('email')
+    //     }
+    // })))
     const messages = useSelector((state) => state.chatData)
     const [popup, setPopup] = useState(false);
     const [search, setSearch] = useState("");
@@ -40,6 +50,7 @@ const Chat = () => {
 
 
     useEffect(() => {
+        socket.connect()
         if (chatRoomData.length == 0) {
             getChatRoomData()
         }
@@ -62,7 +73,6 @@ const Chat = () => {
 
             dispatch(pushNewMessage({ key: payload.roomId, value: obj }))
             dispatch(updateLastMessage({ roomId: payload.roomId, name: payload.name, message: payload.newMessage }))
-            // socket.removeListener("receive_message")
         })
 
         socket.on("new_room", (payload) => {
@@ -72,13 +82,14 @@ const Chat = () => {
             // socket.removeListener("new_room")
         })
         // }
-        return()=>{
+        return () => {
             socket.off("new_room")
             socket.off("receive_message")
         }
     }, [])
 
     const getChatRoomData = async () => {
+
         if (userDetails.email && userDetails.name && userDetails.sourceId) {
             console.log(JSON.stringify(userDetails));
             let result = await getChatRoomService(userDetails)
@@ -117,11 +128,30 @@ const Chat = () => {
         setUsers(result.data)
     }
 
+    const bindGrid =()=> {
+        return (
+            (chatRoomData.length > 0 && chatRoomData) && chatRoomData?.map((item) => {
+                return { ...item, lastMessage: lastMessageData.find((mess) => mess.lastMessage.roomId == item.usersroom.roomId) }
+            }).sort((item1, item2) => new Date(item2.lastMessage.lastMessage.roommessages.createdDate) - new Date(item1.lastMessage.lastMessage.roommessages.createdDate)).map((room, index) => (
+                <li key={index} className={`list-group-item d-flex align-items-center p-3 ${activeChat === room?.usersroom?.roomId ? 'active' : ''}`} onClick={() => { handleChatClick(room) }}>
+                    <div className="chat-avatar bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style={{ width: "40px", height: "40px" }}>
+                        {room?.roomMembers[0]?.user?.name?.charAt(0).toUpperCase() || 'null'}
+                    </div>
+                    <div className="chat-info">
+                        <strong>{room?.roomMembers?.filter((roomie) => roomie?.user?._id !== userDetails.sourceId).map((roomie) => (roomie?.user?.name)).join(', ')}</strong>
+                        <p className="small text-muted m-0">{lastMessageData.find((item) => item?.lastMessage?.roomId == room?.usersroom?.roomId).lastMessage.users._id === userDetails.sourceId ? "Me" : lastMessageData.find((item) => item?.lastMessage?.roomId == room?.usersroom?.roomId).lastMessage.users.name} : {lastMessageData.find((item) => item?.lastMessage?.roomId == room?.usersroom?.roomId).lastMessage.roommessages.roomMessage.length >= 255 ? lastMessageData.find((item) => item?.lastMessage?.roomId == room?.usersroom?.roomId).lastMessage.roommessages.roomMessage.slice(0, 27) + " ....." : lastMessageData.find((item) => item?.lastMessage?.roomId == room?.usersroom?.roomId).lastMessage.roommessages.roomMessage}</p>
+                        {/* <p className="small text-muted m-0">No Last Message da</p> */}
+                    </div>
+                </li>
+            ))
+        )
+    }
+
     return (
         <div className="container-fluid vh-100 d-flex p-0">
             {/* Sidebar */}
             <div onClick={() => { setUsers([]); setSearch('') }} className="col-md-3 bg-dark text-light p-3 border-end">
-                <h4 className="text-center">Chats</h4>
+                <h4 className="text-center">Chats of {userDetails.name}</h4>
 
                 {/* Search Bar */}
                 <input
@@ -141,18 +171,7 @@ const Chat = () => {
                     ))}
                 </ul>
                 <ul hidden={users.length != 0} className="list-group chat-list overflow-auto" style={{ height: "615px" }} >
-                    {(chatRoomData.length > 0 && chatRoomData) && chatRoomData?.map((room, index) => (
-                        <li key={index} className={`list-group-item d-flex align-items-center p-3 ${activeChat === room?.usersroom?.roomId ? 'active' : ''}`} onClick={() => { handleChatClick(room) }}>
-                            <div className="chat-avatar bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style={{ width: "40px", height: "40px" }}>
-                                {room?.roomMembers[0]?.user?.name?.charAt(0).toUpperCase() || 'null'}
-                            </div>
-                            <div className="chat-info">
-                                <strong>{room?.roomMembers?.filter((roomie) => roomie?.user?._id !== userDetails.sourceId).map((roomie) => (roomie?.user?.name)).join(', ')}</strong>
-                                {/* <p className="small text-muted m-0">{lastMessageData[index].lastMessage.users._id === userDetails.sourceId ? "Me" : lastMessageData[index].lastMessage.users.name} : {lastMessageData[index].lastMessage.roommessages.roomMessage.length >= 255 ? lastMessageData[index].lastMessage.roommessages.roomMessage.slice(0, 27) + " ....." : lastMessageData[index].lastMessage.roommessages.roomMessage}</p> */}
-                                <p className="small text-muted m-0">No Last Message da</p>
-                            </div>
-                        </li>
-                    ))}
+                    {bindGrid()}
                 </ul>
             </div>
 
