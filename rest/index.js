@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const connectDB = require("./Server/server.js");
 
-const port = 8081;
+const port = 8080
 const cors = require('cors');
 const { signin, login, createRoom, searchUser, getChatRoom, getMessages, addNewMessage } = require("./Business Logics/chatBL.js");
 const app = express();
