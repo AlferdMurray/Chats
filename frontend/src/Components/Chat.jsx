@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ChatWindow } from "./ChatWindow";
 import { useDispatch, useSelector } from 'react-redux'
 import { pushNewMessage, setChatData } from "../Slices/chatDataSlice";
-import { setLastMessage, updateLastMessage } from "../Slices/lastMessageSlice";
+import { addLastMessage, setLastMessage, updateLastMessage } from "../Slices/lastMessageSlice";
 import NewChatPopup from "./NewChatPopup";
 import { pushNewChat, setChatsData } from "../Slices/chatsDataSlice";
 
@@ -50,9 +50,9 @@ const Chat = () => {
 
 
     useEffect(() => {
-        socket.connect()
+        // const socket = getSocket()
         if (chatRoomData.length == 0) {
-            getChatRoomData()
+            getChatRoomData(socket)
         }
         // else {
         socket.on("receive_message", (payload) => {
@@ -75,9 +75,33 @@ const Chat = () => {
             dispatch(updateLastMessage({ roomId: payload.roomId, name: payload.name, message: payload.newMessage }))
         })
 
+        socket.on("ping", (payload) => {
+            console.log(payload);
+        })
+
+
         socket.on("new_room", (payload) => {
             console.log(payload, "from BE");
             dispatch(pushNewChat(payload.message))
+            let lastMessage = {
+                roomId: payload.message.usersroom.roomId,
+                roommembers: {
+                    roomId: payload.message.usersroom.roomId,
+                    userId: payload.message.roomMembers[0].user._id
+                },
+                roommessages: {
+                    createdDate: new Date(),
+                    roomId: payload.message.usersroom.roomId,
+                    roomMessage: payload.lastMessage
+                },
+                users: {
+                    name: payload.message.roomMembers[0].user.name,
+                    email: payload.message.roomMembers[0].user.email
+                }
+
+            }
+            dispatch(addLastMessage({ lastMessage }))
+            // dispatch(updateLastMessage({ roomId: payload.message.usersroom.roomId, name: payload.message.roomMembers[0].user.name, message: payload.lastMessage }))
             socket.emit("join_room", JSON.stringify([payload.message.usersroom.roomId]))
             // socket.removeListener("new_room")
         })
@@ -128,7 +152,7 @@ const Chat = () => {
         setUsers(result.data)
     }
 
-    const bindGrid =()=> {
+    const bindGrid = () => {
         return (
             (chatRoomData.length > 0 && chatRoomData) && chatRoomData?.map((item) => {
                 return { ...item, lastMessage: lastMessageData.find((mess) => mess.lastMessage.roomId == item.usersroom.roomId) }

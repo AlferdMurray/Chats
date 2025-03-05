@@ -21,7 +21,6 @@ io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
   console.log(socket.handshake.query.email);
   if (socket.handshake.query.email == 'null') {
-    console.log("here");
     socket.disconnect()
     return
   }
@@ -39,12 +38,11 @@ io.on("connection", (socket) => {
 
   socket.on("new_room", async (data) => {
     let socketId = await getSocketId(JSON.parse(data).targetId)
-    io.to(socketId).emit("new_room", { message: JSON.parse(data).newChat }) // Send message to the room
+    io.to(socketId).emit("new_room", { message: JSON.parse(data).newChat, lastMessage : JSON.parse(data).initialMessage }) // Send message to the room
   });
 
   // Handle chat message
   socket.on("send_message", async (data) => {
-    console.log(data.newMessage);
     io.to(data.roomId).emit("receive_message", { newMessage: data.newMessage, sourceId: data.sourceId, createdDate: data.createdDate, roomId: data.roomId, name: data.name }); // Send message to the room
     await addNewMessage(data)
   });

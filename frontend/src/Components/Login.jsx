@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { loginService } from "../Service/chatService";
 import { validationMessages } from "../constant";
 import Popup from "./Popup";
-
+import io from "socket.io-client";
+import { connectSocket } from "../Socket/socket";
 const Login = ({ onSignIn }) => {
     const [formInputs, setFormInputs] = useState({ email: '', password: '' })
     const [formValidationMessage, setFormValidationMessage] = useState({ email: '', password: '' })
@@ -28,7 +29,8 @@ const Login = ({ onSignIn }) => {
                 sessionStorage.setItem('email', result.data.userData.email)
                 sessionStorage.setItem('name', result.data.userData.name)
                 sessionStorage.setItem('sourceId', result.data.userData._id)
-                navigate('/chat')
+                connectSocket()
+                navigate('/chat',)
             }
 
         } catch (error) {
