@@ -93,6 +93,7 @@ const Chat = () => {
         return () => {
             socket.off("new_room")
             socket.off("receive_message")
+            socket.disconnect()
         }
     }, [])
     
