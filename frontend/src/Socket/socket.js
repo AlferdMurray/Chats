@@ -6,7 +6,7 @@ export const connectSocket = () => {
     if (!socket) {
         const email = sessionStorage.getItem("email"); // Check sessionStorage
         if (email) {
-            socket = io("http://192.168.1.36:8081", {
+            socket = io("http://chatappbackend.ap-south-1.elasticbeanstalk.com", {
                 reconnection: true,
                 reconnectionDelay: 1000,
                 autoConnect: true,
