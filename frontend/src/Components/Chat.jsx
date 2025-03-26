@@ -9,13 +9,14 @@ import { addLastMessage, setLastMessage, updateLastMessage } from "../Slices/las
 import NewChatPopup from "./NewChatPopup";
 import { pushNewChat, setChatsData } from "../Slices/chatsDataSlice";
 
-const socket = io("http://192.168.1.34:4000", {
+const socket = io("http://chatappbackend.ap-south-1.elasticbeanstalk.com", {
     reconnection: true,
+    transports: ["websocket", "polling"],
     reconnectionDelay: 1000,
     autoConnect: true,
     query: {
         email: sessionStorage.getItem('email')
-    }
+    },
 })
 
 const Chat = () => {
@@ -23,16 +24,6 @@ const Chat = () => {
 
     const navigate = useNavigate()
     const dispatch = useDispatch()
-    // const socket = io.connect("http://192.168.1.34:4000", {
-    //     query: {
-    //         email: sessionStorage.getItem('email')
-    //     }
-    // })
-    // const [socket, _setSocket] = useState(() => (io.connect("http://192.168.1.36:4000", {
-    //     query: {
-    //         email: sessionStorage.getItem('email')
-    //     }
-    // })))
     const messages = useSelector((state) => state.chatData)
     const [popup, setPopup] = useState(false);
     const [search, setSearch] = useState("");
@@ -40,7 +31,6 @@ const Chat = () => {
     const chatRoomData = useSelector((state) => state.chatsData)
     const [activeChat, setActiveChat] = useState(null)
     const lastMessageData = useSelector((state) => state.lastMessage)
-    // const [messageData, setMessageData] = useState({})
     const userDetails = {
         name: sessionStorage.getItem('name'),
         email: sessionStorage.getItem('email'),
@@ -50,11 +40,9 @@ const Chat = () => {
 
 
     useEffect(() => {
-        // const socket = getSocket()
         if (chatRoomData.length == 0) {
             getChatRoomData(socket)
         }
-        // else {
         socket.on("receive_message", (payload) => {
             console.log(payload);
             debugger
@@ -69,7 +57,6 @@ const Chat = () => {
                 roomMessage: payload.newMessage
             }
             console.log({ key: payload.roomId, value: obj });
-            // console.log(messages);
 
             dispatch(pushNewMessage({ key: payload.roomId, value: obj }))
             dispatch(updateLastMessage({ roomId: payload.roomId, name: payload.name, message: payload.newMessage }))
@@ -101,9 +88,7 @@ const Chat = () => {
 
             }
             dispatch(addLastMessage({ lastMessage }))
-            // dispatch(updateLastMessage({ roomId: payload.message.usersroom.roomId, name: payload.message.roomMembers[0].user.name, message: payload.lastMessage }))
             socket.emit("join_room", JSON.stringify([payload.message.usersroom.roomId]))
-            // socket.removeListener("new_room")
         })
         // }
         return () => {
@@ -120,8 +105,6 @@ const Chat = () => {
             if (result.data.chatRoom) {
                 dispatch(setLastMessage(result?.data?.topMessage))
                 dispatch(setChatsData(result?.data?.chatRoom[0]?.rooms))
-                // setChatRoomData(result?.data?.chatRoom?.length > 0 ?  : [])
-                // setLastMessageData(result?.data?.topMessage)
                 socket.emit("join_room", JSON.stringify(result?.data?.chatRoom?.length > 0 && result?.data?.chatRoom[0].rooms?.map((room) => (room.usersroom.roomId))))
             }
 

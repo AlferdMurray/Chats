@@ -16,7 +16,7 @@ const corsOptions = {
 connectDB()
 app.use(express.json());
 app.use(cors(corsOptions));
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
 
 app.listen(port, '0.0.0.0', (err) => {
     if (err) {

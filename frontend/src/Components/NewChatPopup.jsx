@@ -45,11 +45,7 @@ const NewChatPopup = ({ onClose, user, socket }) => {
                         email: user.email
                     }
                 }
-            ],
-            // createdDate: newRoom.data.roomMessage.createdDate,
-            // roomMessage: newRoom.data.roomMessage.roomMessage,
-            // roomId: newRoom.data.roomId
-
+            ]
         }
 
         let lastMessage = {
@@ -73,7 +69,6 @@ const NewChatPopup = ({ onClose, user, socket }) => {
         dispatch(pushNewChat(newChat))
         dispatch(updateLastMessage({ roomId: newRoom.data.roomId, name: userDetails.name, message: newRoom.data.roomMessage.roomMessage }))
         dispatch(addLastMessage({lastMessage}))
-        // dispatch(renderChat())
         socket.emit("new_room", JSON.stringify({ targetId: user._id,initialMessage : inputValue, newChat }))
         socket.emit("join_room", JSON.stringify([newRoom.data.roomId]))
     }

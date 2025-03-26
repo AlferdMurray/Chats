@@ -17,18 +17,6 @@ export const ChatWindow = ({ roomId, socket, userDetails }) => {
         dispatch(renderChat())
         socket.emit("send_message", { newMessage, roomId, sourceId: userDetails.sourceId, name: userDetails.name, createdDate: moment.utc().toDate() })
     }
-    // useEffect(() => {
-    //     scrollToBottom()
-    // }, [])
-
-    // const scrollToBottom = () => {
-    //     debugger
-    //     console.log("here");
-
-    //     if (chatBoxRef.currentTarget) {
-    //         chatBoxRef.currentTarget.scrollTop = chatBoxRef.currentTarget.scrollHeight;
-    //     }
-    // };
     return (
         <div className="col-md-9 d-flex flex-column bg-secondary text-light p-3">
             {roomId ? <div className="chat-box flex-grow-1 overflow-auto p-3 border rounded bg-dark" style={{ scrollBehavior: 'smooth', scrollbarWidth: 'thin', scrollbarColor: 'white', scrollPaddingRight: '1000px' }} >
@@ -41,12 +29,6 @@ export const ChatWindow = ({ roomId, socket, userDetails }) => {
                         </div>
                     </div>
                 ))}
-                {/* {messages.map((msg, index) => (
-                    <div key={index} className="mb-2">
-                        <strong>{msg.sender}: </strong>
-                        {msg.text}
-                    </div>
-                ))} */}
             </div> : <div className="chat-box flex-grow-1 overflow-auto p-3 border rounded bg-dark d-flex align-items-center justify-content-center">Press any Chat to display the messages</div>}
 
             {/* Message Input */}
