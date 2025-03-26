@@ -38,7 +38,6 @@ const Chat = () => {
     }
     const [users, setUsers] = useState([])
 
-
     useEffect(() => {
         if (chatRoomData.length == 0) {
             getChatRoomData(socket)
@@ -96,7 +95,7 @@ const Chat = () => {
             socket.off("receive_message")
         }
     }, [])
-
+    
     const getChatRoomData = async () => {
 
         if (userDetails.email && userDetails.name && userDetails.sourceId) {
